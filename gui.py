@@ -11,6 +11,7 @@ import ctypes
 from typing import Optional, List, Dict
 import datetime
 import webbrowser
+import zipfile
 from PIL import Image, ImageTk
 
 from converter import (
@@ -35,6 +36,7 @@ TRANSLATIONS = {
         'title': 'Q-FLASH FORGE',
         'rom_source': 'Nguồn ROM',
         'browse': '📂 Chọn Thư Mục',
+        'extract_btn': '📂 Chọn File ZIP',
         'region_selection': 'Chọn Khu Vực (Region)',
         'drivers_tools': 'Driver & Công Cụ',
         'options': 'Tùy Chọn',
@@ -46,6 +48,7 @@ TRANSLATIONS = {
         'create_btn': 'TẠO SUPER IMAGE',
         'recreate_btn': 'TẠO LẠI SUPER IMAGE',
         'processing': 'ĐANG XỬ LÝ...',
+        'extracting': 'ĐANG GIẢI NÉN...',
         'retry': 'THỬ LẠI',
         'status_ready': 'Sẵn sàng',
         'status_done': 'Hoàn tất',
@@ -66,7 +69,7 @@ TRANSLATIONS = {
         'menu_terms': 'Điều khoản',
         'lang_switch': '🇬🇧 English',
         'about_title': 'Giới thiệu',
-        'about_text': 'Q-Flash Forge\n\nTool hỗ trợ convert ROM và fix driver cho các dòng máy Oppo/OnePlus.\n\nNgười phát triển: [Author Name]\nFacebook: [Facebook Link]\nTelegram: [Telegram Link]',
+        'about_text': 'Q-Flash Forge\n\nTool hỗ trợ convert ROM và fix driver cho các dòng máy Oppo/OnePlus/Realme (Factory/Domestic/Export ROMs).\n\nNgười phát triển: Xuan Nguyen\nFacebook: https://www.facebook.com/xuannguyen030923\nTelegram: https://t.me/mitomtreem',
         'donate_title': 'Ủng hộ (Donate)',
         'donate_text': 'Nếu tool hữu ích, bạn có thể ủng hộ mình qua:\n\nBinance ID: 381766288\n\nCảm ơn bạn rất nhiều! ❤️',
         'terms_title': 'Điều khoản sử dụng',
@@ -80,6 +83,7 @@ TRANSLATIONS = {
         'title': 'Q-FLASH FORGE',
         'rom_source': 'ROM Source',
         'browse': '📂 Browse Folder',
+        'extract_btn': '📂 Extract .ZIP',
         'region_selection': 'Region Selection',
         'drivers_tools': 'Drivers & Tools',
         'options': 'Options',
@@ -91,6 +95,7 @@ TRANSLATIONS = {
         'create_btn': 'CREATE SUPER IMAGE',
         'recreate_btn': 'RE-CREATE SUPER IMAGE',
         'processing': 'PROCESSING...',
+        'extracting': 'EXTRACTING...',
         'retry': 'RETRY',
         'status_ready': 'Ready',
         'status_done': 'Done',
@@ -111,7 +116,7 @@ TRANSLATIONS = {
         'menu_terms': 'Terms',
         'lang_switch': '🇻🇳 Tiếng Việt',
         'about_title': 'About',
-        'about_text': 'Q-Flash Forge\n\nTool for converting ROMs and fixing drivers for Oppo/OnePlus devices.\n\nDeveloper: [Author Name]\nFacebook: [Facebook Link]\nTelegram: [Telegram Link]',
+        'about_text': 'Q-Flash Forge\n\nTool for converting ROMs and fixing drivers for Oppo/OnePlus/Realme devices (Factory/Domestic/Export).\n\nDeveloper: Xuan Nguyen\nFacebook: https://www.facebook.com/xuannguyen030923\nTelegram: https://t.me/mitomtreem',
         'donate_title': 'Donate',
         'donate_text': 'If you find this tool helpful, you can support me via:\n\nBinance ID: 381766288\n\nThank you very much! ❤️',
         'terms_title': 'Terms of Use',
@@ -153,6 +158,13 @@ class RomConverterApp:
         self.root = root
         self.root.geometry("1100x800")
         self.root.minsize(1000, 700)
+        
+        # Set Window Icon
+        try:
+            icon_path = resource_path("assets/icon.ico")
+            if icon_path.exists():
+                self.root.iconbitmap(str(icon_path))
+        except: pass
         
         self.current_lang = 'VI'  # Default Language
         
@@ -224,6 +236,7 @@ class RomConverterApp:
 
         # Buttons & Labels
         self.ui_elements['btn_browse'].config(text=self.tr('browse'))
+        self.ui_elements['btn_extract'].config(text=self.tr('extract_btn'))
         self.ui_elements['btn_zadig'].config(text=self.tr('run_zadig'))
         self.ui_elements['btn_driver'].config(text=self.tr('install_kedacom'))
         self.ui_elements['chk_nvid'].config(text=self.tr('append_nvid'))
@@ -335,6 +348,10 @@ class RomConverterApp:
         self.ui_elements['btn_browse'] = tk.Button(parent, text="", bg='#FFF3E0', fg='#E65100', 
                         relief='flat', command=self.browse_folder, font=FONTS['button'], cursor='hand2')
         self.ui_elements['btn_browse'].pack(fill=tk.X, pady=(5, 0))
+
+        self.ui_elements['btn_extract'] = tk.Button(parent, text="", bg='#E0F2F1', fg='#00695C', 
+                        relief='flat', command=self.extract_source_zip, font=FONTS['button'], cursor='hand2')
+        self.ui_elements['btn_extract'].pack(fill=tk.X, pady=(5, 0))
 
     def create_region_list_content(self, parent):
         container = tk.Frame(parent, bg=COLORS['card_bg'])
@@ -696,6 +713,82 @@ class RomConverterApp:
             self.log(self.tr('msg_failed'), "ERROR")
             self.status_var.set(self.tr('status_failed'))
             self.start_btn.configure(text=self.tr('retry'), bg=COLORS['success'])
+
+    # --- ZIP Extraction ---
+
+    def extract_source_zip(self):
+        if self.is_processing: return
+        
+        zip_path = filedialog.askopenfilename(
+            title=self.tr('extract_btn'),
+            filetypes=[("ZIP Files", "*.zip")]
+        )
+        if not zip_path: return
+        
+        out_root = filedialog.askdirectory(title=self.tr('browse'))
+        if not out_root: return
+        
+        # Create subfolder based on zip name
+        zip_name = Path(zip_path).stem
+        final_out_dir = Path(out_root) / zip_name
+        
+        if not final_out_dir.exists():
+            try:
+                final_out_dir.mkdir(parents=True, exist_ok=True)
+            except Exception as e:
+                 messagebox.showerror("Error", f"Cannot create folder {final_out_dir}: {e}")
+                 return
+
+        # Start extraction
+        self.is_processing = True
+        self.start_btn.configure(state='disabled', text=self.tr('extracting'), bg='#9E9E9E')
+        self.progress_var.set(0)
+        self.log(f"Extracting: {Path(zip_path).name} -> {final_out_dir.name}", "INFO")
+        
+        threading.Thread(target=self._extract_worker, args=(zip_path, final_out_dir), daemon=True).start()
+
+    def _extract_worker(self, zip_path, out_dir):
+        try:
+            with zipfile.ZipFile(zip_path, 'r') as zf:
+                infos = zf.infolist()
+                total = sum(1 for x in infos if not x.is_dir())
+                current = 0
+                
+                for info in infos:
+                    if info.is_dir(): continue
+                    zf.extract(info, out_dir)
+                    current += 1
+                    # Update every 5 files to reduce UI lag per file
+                    if current % 5 == 0 or current == total:
+                         self.root.after(0, lambda c=current, t=total: self._extract_prog(c, t))
+            
+            self.root.after(0, lambda: self._extract_finish(True, out_dir))
+            
+        except Exception as e:
+            self.root.after(0, lambda: self.log(f"Extraction Error: {e}", "ERROR"))
+            self.root.after(0, lambda: self._extract_finish(False, None))
+
+    def _extract_prog(self, cur, tot):
+        if tot > 0:
+            pct = (cur/tot)*100
+            self.progress_var.set(pct)
+            self.status_var.set(f"Extracting: {int(pct)}%")
+
+    def _extract_finish(self, success, out_dir):
+        self.is_processing = False
+        self.start_btn.configure(state='normal')
+        self.progress_var.set(0)
+        self.status_var.set(self.tr('status_done') if success else self.tr('status_failed'))
+        
+        if success and out_dir:
+            self.log("Extraction Complete", "SUCCESS")
+            # Auto-load
+            self.rom_folder = Path(out_dir)
+            self.folder_var.set(str(self.rom_folder))
+            self.scan_rom()
+        else:
+            self.log("Extraction Failed", "ERROR")
+            self.start_btn.configure(text=self.tr('create_btn'), bg=COLORS['success'])
 
 def main():
     root = tk.Tk()

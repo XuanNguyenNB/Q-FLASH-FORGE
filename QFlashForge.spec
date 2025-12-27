@@ -65,5 +65,5 @@ exe = EXE(
     target_arch=None,
     codesign_identity=None,
     entitlements_file=None,
-    icon=None,  # Add icon path here if you have one e.g. 'icon.ico'
+    icon=str(spec_dir / 'assets' / 'icon.ico'),  # App Icon
 )

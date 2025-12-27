@@ -1,12 +1,11 @@
 # Q-Flash Forge
 
-**Q-Flash Forge** is a comprehensive tool for converting ROMs, fixing drivers, and managing partitions for Oppo/OnePlus devices (OPlus). It provides a user-friendly GUI for tasks that typically require complex command-line interactions.
-
-![Q-Flash Forge GUI](assets/screenshot_placeholder.png)
+**Q-Flash Forge** is a comprehensive tool developed by **Xuan Nguyen** for converting ROMs, fixing drivers, and managing partitions for **Oppo, OnePlus, and Realme** devices (supporting both Factory/Domestic and Export ROMs). It provides a user-friendly GUI for tasks that typically require complex command-line interactions.
 
 ## Features
 
 - **ROM Conversion:** Convert sparse images (`.img`) to raw format and merge them into a `super.img`.
+- **Archive Support:** **[NEW]** Native `.ZIP` ROM extraction. Directly select a ZIP file, and the tool will extract and verify it automatically.
 - **Driver Management:**
   - One-click **Zadig** (WinUSB) launcher with Admin elevation.
   - One-click **Kedacom USB Driver** installer/fixer.
@@ -19,7 +18,9 @@
 
 ## Usage
 
-1. **Select ROM Source:** Point the tool to your decrypted ROM folder.
+1. **Select ROM Source:**
+   - Click **"Browse Folder"** for an extracted ROM folder.
+   - Or click **"Extract .ZIP"** to select a ROM archive.
 2. **Choose Region:** Select the target region from the list (e.g., `IN`, `EU`, `VN`).
 3. **Partition Check:** The tool verifies all required partition images exist.
 4. **Create Super Image:** Click "CREATE SUPER IMAGE" to generate the merged file.
@@ -31,26 +32,11 @@
 - [Python 3.8+](https://www.python.org/downloads/) (if running from source)
 - `simg2img.exe`, `lpmake.exe` (Bundled in releases)
 
-## Building from Source
+## Contact & Support
 
-1. Clone the repository:
-   ```bash
-   git clone https://github.com/yourusername/QFlashForge.git
-   cd QFlashForge
-   ```
-2. Install dependencies:
-   ```bash
-   pip install -r requirements.txt
-   ```
-3. Run the application:
-   ```bash
-   python main.py
-   ```
-4. Build EXE:
-   ```bash
-   pip install pyinstaller
-   pyinstaller QFlashForge.spec
-   ```
+- **Developer:** Xuan Nguyen
+- **Facebook:** [https://www.facebook.com/xuannguyen030923](https://www.facebook.com/xuannguyen030923)
+- **Telegram:** [https://t.me/mitomtreem](https://t.me/mitomtreem)
 
 ## License
 
