@@ -53,6 +53,8 @@ TRANSLATIONS = {
         'status_ready': 'Sẵn sàng',
         'status_done': 'Hoàn tất',
         'status_failed': 'Thất bại',
+        'save_log': '💾 Lưu Log',
+        'clear_log': '🗑️ Xóa Log',
         'col_region': 'Khu Vực',
         'col_nvid': 'NV ID',
         'col_name': 'Tên',
@@ -69,7 +71,9 @@ TRANSLATIONS = {
         'menu_terms': 'Điều khoản',
         'lang_switch': '🇬🇧 English',
         'about_title': 'Giới thiệu',
-        'about_text': 'Q-Flash Forge\n\nTool hỗ trợ convert ROM và fix driver cho các dòng máy Oppo/OnePlus/Realme (Factory/Domestic/Export ROMs).\n\nNgười phát triển: Xuan Nguyen\nFacebook: https://www.facebook.com/xuannguyen030923\nTelegram: https://t.me/mitomtreem',
+        'about_info': 'Q-Flash Forge\n\nTool hỗ trợ convert ROM và fix driver cho các dòng máy Oppo/OnePlus/Realme (Factory/Domestic/Export ROMs).\n\nNgười phát triển: Xuan Nguyen',
+        'about_fb': 'Facebook: https://www.facebook.com/xuannguyen030923',
+        'about_tele': 'Telegram: https://t.me/mitomtreem',
         'donate_title': 'Ủng hộ (Donate)',
         'donate_text': 'Nếu tool hữu ích, bạn có thể ủng hộ mình qua:\n\nBinance ID: 381766288\n\nCảm ơn bạn rất nhiều! ❤️',
         'terms_title': 'Điều khoản sử dụng',
@@ -100,6 +104,8 @@ TRANSLATIONS = {
         'status_ready': 'Ready',
         'status_done': 'Done',
         'status_failed': 'Failed',
+        'save_log': '💾 Save Log',
+        'clear_log': '🗑️ Clear Log',
         'col_region': 'Region',
         'col_nvid': 'NV ID',
         'col_name': 'Name',
@@ -116,7 +122,9 @@ TRANSLATIONS = {
         'menu_terms': 'Terms',
         'lang_switch': '🇻🇳 Tiếng Việt',
         'about_title': 'About',
-        'about_text': 'Q-Flash Forge\n\nTool for converting ROMs and fixing drivers for Oppo/OnePlus/Realme devices (Factory/Domestic/Export).\n\nDeveloper: Xuan Nguyen\nFacebook: https://www.facebook.com/xuannguyen030923\nTelegram: https://t.me/mitomtreem',
+        'about_info': 'Q-Flash Forge\n\nTool for converting ROMs and fixing drivers for Oppo/OnePlus/Realme devices (Factory/Domestic/Export).\n\nDeveloper: Xuan Nguyen',
+        'about_fb': 'Facebook: https://www.facebook.com/xuannguyen030923',
+        'about_tele': 'Telegram: https://t.me/mitomtreem',
         'donate_title': 'Donate',
         'donate_text': 'If you find this tool helpful, you can support me via:\n\nBinance ID: 381766288\n\nThank you very much! ❤️',
         'terms_title': 'Terms of Use',
@@ -240,6 +248,9 @@ class RomConverterApp:
         self.ui_elements['btn_zadig'].config(text=self.tr('run_zadig'))
         self.ui_elements['btn_driver'].config(text=self.tr('install_kedacom'))
         self.ui_elements['chk_nvid'].config(text=self.tr('append_nvid'))
+        
+        self.ui_elements['btn_save_log'].config(text=self.tr('save_log'))
+        self.ui_elements['btn_clear_log'].config(text=self.tr('clear_log'))
         
         if not self.is_processing:
             if self.start_btn['state'] == 'disabled':
@@ -435,6 +446,18 @@ class RomConverterApp:
         container = tk.Frame(parent, bg='white')
         container.pack(fill=tk.BOTH, expand=True)
         
+        # Toolbar (Transparent look)
+        toolbar = tk.Frame(container, bg='white', bd=0)
+        toolbar.pack(fill=tk.X, side=tk.TOP, pady=(0, 2))
+        
+        self.ui_elements['btn_save_log'] = tk.Button(toolbar, text="", bg='#E0E0E0', relief='flat', 
+                                                     font=('Segoe UI', 8), command=self.save_log)
+        self.ui_elements['btn_save_log'].pack(side=tk.LEFT, padx=0)
+        
+        self.ui_elements['btn_clear_log'] = tk.Button(toolbar, text="", bg='#E0E0E0', relief='flat', 
+                                                      font=('Segoe UI', 8), command=self.clear_log)
+        self.ui_elements['btn_clear_log'].pack(side=tk.RIGHT, padx=0)
+
         self.log_text = tk.Text(container, bg='white', fg='#333', font=FONTS['mono'], 
                                relief='flat', state='disabled')
         vsb = ttk.Scrollbar(container, orient="vertical", command=self.log_text.yview)
@@ -453,7 +476,46 @@ class RomConverterApp:
     # --- Menu Actions ---
 
     def show_about(self):
-        messagebox.showinfo(self.tr('about_title'), self.tr('about_text'))
+        top = tk.Toplevel(self.root)
+        top.title(self.tr('about_title'))
+        top.geometry("500x300")
+        top.configure(bg='white')
+        
+        tk.Label(top, text=self.tr('about_info'), bg='white', font=('Segoe UI', 10), justify='left').pack(pady=(20, 10), padx=20, anchor='w')
+        
+        # Clickable Links
+        link_fb = tk.Label(top, text=self.tr('about_fb'), bg='white', fg=COLORS['primary'], font=('Segoe UI', 10, 'underline'), cursor='hand2')
+        link_fb.pack(pady=2, padx=20, anchor='w')
+        link_fb.bind("<Button-1>", lambda e: webbrowser.open("https://www.facebook.com/xuannguyen030923"))
+        
+        link_tele = tk.Label(top, text=self.tr('about_tele'), bg='white', fg=COLORS['primary'], font=('Segoe UI', 10, 'underline'), cursor='hand2')
+        link_tele.pack(pady=2, padx=20, anchor='w')
+        link_tele.bind("<Button-1>", lambda e: webbrowser.open("https://t.me/mitomtreem"))
+        
+        tk.Button(top, text="OK", command=top.destroy, width=10, bg=COLORS['primary'], fg='white', relief='flat').pack(side=tk.BOTTOM, pady=20)
+
+    def save_log(self):
+        content = self.log_text.get("1.0", tk.END)
+        if not content.strip(): return
+        
+        f = filedialog.asksaveasfilename(
+            defaultextension=".txt",
+            filetypes=[("Text Files", "*.txt"), ("All Files", "*.*")],
+            title=self.tr('save_log')
+        )
+        if f:
+            try:
+                with open(f, 'w', encoding='utf-8') as file:
+                    file.write(content)
+                messagebox.showinfo("Success", "Log saved successfully.")
+            except Exception as e:
+                messagebox.showerror("Error", f"Failed to save log: {e}")
+
+    def clear_log(self):
+        self.log_text.configure(state='normal')
+        self.log_text.delete("1.0", tk.END)
+        self.log_text.configure(state='disabled')
+        self.log("Log cleared.", "INFO")
 
     def show_donate(self):
         messagebox.showinfo(self.tr('donate_title'), self.tr('donate_text'))
