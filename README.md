@@ -1,6 +1,6 @@
 # Q-Flash Forge
 
-**Q-Flash Forge** is a comprehensive tool developed by **Xuan Nguyen** for converting ROMs, fixing drivers, and managing partitions for **Oppo, OnePlus, and Realme** devices (supporting both Factory/Domestic and Export ROMs). It provides a user-friendly GUI for tasks that typically require complex command-line interactions.
+**Q-Flash Forge** is a comprehensive tool developed for converting ROMs, fixing drivers, and managing partitions for **Oppo, OnePlus, and Realme** devices (supporting both Factory/Domestic and Export ROMs). It provides a user-friendly GUI for tasks that typically require complex command-line interactions.
 
 ## Features
 
